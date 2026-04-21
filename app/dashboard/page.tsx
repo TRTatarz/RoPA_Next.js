@@ -1,31 +1,52 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { LayoutDashboard, Users, Shield, FileText, LogOut, Menu, X } from 'lucide-react';
+import { LayoutDashboard, Users, Shield, FileText, LogOut, Menu, X, ShieldCog } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+
+//admin
 import { DashboardTab } from '@/components/admin/dashboard-tab';
-import { UserDashboardTab } from '@/components/user/user-dashboard-tab';
 import { UsersTab } from '@/components/admin/users-tab';
 import { RolesTab } from '@/components/admin/roles-tab';
 import { AuditTab } from '@/components/admin/audit-tab';
-import { RopaForm } from '@/components/user/ropa_form';
+
+//user
+import { DashboardContent } from '@/components/user/dashboard-content';
+
+//manager
+import { ManagerDashboardTab } from '@/components/manager/dashboard-tab';
+
+//dpo
+import { DpoDashboardTab } from '@/components/dpo/dashboard-tab';
+import { DpoRopaTab } from '@/components/dpo/ropa-tab';
+
+//executive
+import { ExecutiveDashboardContent } from '@/components/executive/dashboard-content';
+
+//viewer/auditor
+import { ViewerDashboardTab } from '@/components/viewer/dashboard-tab';
 
 const TABS = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['ADMIN'] },
   { id: 'users', label: 'User Management', icon: Users, roles: ['ADMIN'] },
   { id: 'roles', label: 'Roles & Permission', icon: Shield, roles: ['ADMIN'] },
   { id: 'audit', label: 'Audit Logs', icon: FileText, roles: ['ADMIN', 'DATA PROTECTION OFFICER'] },
-  { id: 'profile', label: 'My Profile', icon: Users, roles: ['USER'] },
-  { id: 'ropa', label: 'ROPA Form', icon: FileText, roles: ['USER'] }
+  { id: 'profile', label: 'Dashboard', icon: Users, roles: ['USER'] },
+  { id: 'manager_dashboard', label: 'Dashboard', icon: Users, roles: ['SUPERVISOR'] },
+  { id: 'dpo_dashboard', label: 'Dashboard', icon: Shield, roles: ['DATA PROTECTION OFFICER'] },
+  { id: 'dpo_ropa', label: 'ROPA Review', icon: ShieldCog , roles: ['DATA PROTECTION OFFICER'] },
+  { id: 'executive_dashboard', label: 'Dashboard', icon: Shield, roles: ['EXECUTIVE'] },
+  { id: 'viewer_dashboard', label: 'Dashboard', icon: Shield, roles: ['VIEWER', 'AUDITOR'] }
 ] as const;
+
 
 type TabId = typeof TABS[number]['id'];
 
 export default function Main() {
-  const [activeTab, setActiveTab] = useState<TabId>('users');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
   const router = useRouter();
+  const [activeTab, setActiveTab] = useState<TabId>('dashboard');
 
   useEffect(() => {
     const role = document.cookie
@@ -35,13 +56,25 @@ export default function Main() {
 
     if (!role) {
       router.push('/login');
-    } else {
-      setUserRole(role);
-      const currentTab = TABS.find(t => t.id === 'users');
-      if (currentTab && !(currentTab.roles as readonly string[]).includes(role)) {
-        setActiveTab('dashboard');
-      }
+      return;
     }
+
+    setUserRole(role);
+
+    if (role === 'ADMIN') {
+      setActiveTab('users'); 
+    } else if (role === 'USER') {
+      setActiveTab('profile'); 
+    } else if (role === 'SUPERVISOR') {
+      setActiveTab('manager_dashboard');
+    } else if (role === 'DATA PROTECTION OFFICER') {
+      setActiveTab('dpo_dashboard');
+    } else if (role === 'EXECUTIVE') {
+      setActiveTab('executive_dashboard');
+    } else if (role === 'VIEWER' || role === 'AUDITOR') {
+      setActiveTab('viewer_dashboard');
+    }
+
   }, [router]);
 
   const handleLogout = () => {
@@ -59,19 +92,25 @@ export default function Main() {
     const currentTabSettings = TABS.find(t => t.id === activeTab);
 
     if (userRole && currentTabSettings && !(currentTabSettings.roles as readonly string[]).includes(userRole)) {
-      return userRole === 'ADMIN' ? <DashboardTab /> : <UserDashboardTab />;
+      return userRole === 'ADMIN' ? <DashboardTab /> : <DashboardContent />;
     }
 
     switch (activeTab) {
       case 'dashboard':
-        return userRole === 'ADMIN' ? <DashboardTab /> : <UserDashboardTab />;
+        return userRole === 'ADMIN' ? <DashboardTab /> : <DashboardContent />;
 
       case 'users': return <UsersTab />;
       case 'roles': return <RolesTab />;
       case 'audit': return <AuditTab />;
-      case 'profile': return <UserDashboardTab />;
-      case 'ropa' : return <RopaForm />;
-      default: return userRole === 'ADMIN' ? <DashboardTab /> : <UserDashboardTab />;
+      case 'profile': return <DashboardContent />;
+      case 'manager_dashboard': return <ManagerDashboardTab />;
+      case 'dpo_dashboard': return <DpoDashboardTab onNavigateToRopa={function (): void {
+        throw new Error('Function not implemented.');
+      } } />;
+      case 'dpo_ropa': return <DpoRopaTab />;
+      case 'executive_dashboard': return <ExecutiveDashboardContent />;
+      case 'viewer_dashboard': return <ViewerDashboardTab />;
+      default: return userRole === 'ADMIN' ? <DashboardTab /> : <DashboardContent />;
     }
   };
 
@@ -107,8 +146,8 @@ export default function Main() {
                   setMobileMenuOpen(false);
                 }}
                 className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl transition-all font-bold text-sm tracking-tight ${isActive
-                    ? 'bg-[#21293e] text-white shadow-sm'
-                    : 'text-slate-500 hover:text-slate-300 hover:bg-[#1a2337]'
+                  ? 'bg-[#21293e] text-white shadow-sm'
+                  : 'text-slate-500 hover:text-slate-300 hover:bg-[#1a2337]'
                   }`}
               >
                 <Icon size={20} className={isActive ? 'text-blue-400' : ''} />

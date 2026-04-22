@@ -106,7 +106,6 @@ export function DashboardContent() {
           return;
         }
 
-        // ยิง API ไปที่ Backend (เส้นทางที่เราคุยกันไว้)
         const response = await fetch('http://localhost:8000/api/ropa/import', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

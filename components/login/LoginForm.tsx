@@ -20,7 +20,7 @@ export default function LoginForm() {
       setError("");
 
       try {
-        const response = await fetch("/api/login", {
+        const response = await fetch("https://ropa-backend-production-aaf0.up.railway.app/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ username, password }),

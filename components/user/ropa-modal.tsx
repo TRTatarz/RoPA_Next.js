@@ -5,7 +5,7 @@ import { X, ChevronLeft, ChevronRight, Save, Send, ShieldCheck, Database, Globe,
 
 export function RopaModal({ onClose }: { onClose: () => void }) {
     const [step, setStep] = useState(1);
-    
+
     const [measures, setMeasures] = useState([
         { label: 'มาตรการเชิงองค์กร', active: false, detail: '' },
         { label: 'มาตรการเชิงเทคนิค', active: false, detail: '' },
@@ -44,6 +44,37 @@ export function RopaModal({ onClose }: { onClose: () => void }) {
         risk_level: 'Low',
     });
 
+    // --- ส่วนที่เพิ่ม: Validation Logic ---
+    const isStep1Valid = () => {
+        return (
+            formData.controller_name.trim() !== '' &&
+            formData.processing_activity.trim() !== '' &&
+            formData.purpose.trim() !== '' &&
+            formData.personal_data.trim() !== '' &&
+            formData.legal_basis.trim() !== ''
+        );
+    };
+
+    const isStep2Valid = () => {
+        return (
+            formData.storage_method.trim() !== '' &&
+            formData.retention_period.trim() !== '' &&
+            formData.deletion_method.trim() !== '' &&
+            formData.access_rights.trim() !== '' &&
+            formData.recipients.trim() !== '' &&
+            // ถ้าเลือกโอนต่างประเทศ ต้องกรอกประเทศและชื่อบริษัทด้วย
+            (!formData.international_transfer || (formData.transfer_country.trim() !== '' && formData.company_name.trim() !== ''))
+        );
+    };
+
+    const isStep3Valid = () => {
+        // อย่างน้อยต้องเลือก 1 มาตรการ
+        return measures.some(m => m.active);
+    };
+
+    const canGoNext = step === 1 ? isStep1Valid() : step === 2 ? isStep2Valid() : isStep3Valid();
+    // ----------------------------------
+
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value, type } = e.target;
         const val = type === 'checkbox' ? (e.target as HTMLInputElement).checked : value;
@@ -51,7 +82,7 @@ export function RopaModal({ onClose }: { onClose: () => void }) {
     };
 
     const toggleMeasure = (index: number) => {
-        setMeasures(prev => prev.map((m, i) => 
+        setMeasures(prev => prev.map((m, i) =>
             i === index ? { ...m, active: !m.active, detail: !m.active ? m.detail : '' } : m
         ));
     };
@@ -60,10 +91,40 @@ export function RopaModal({ onClose }: { onClose: () => void }) {
         setMeasures(prev => prev.map((m, i) => i === index ? { ...m, detail: text } : m));
     };
 
-    const handleSubmit = () => {
-        const finalData = { ...formData, security_measures: measures.filter(m => m.active) };
-        console.log("Submitting RoPA Record:", finalData);
-        onClose();
+    const handleSubmit = async () => {
+        const finalData = {
+            ...formData,
+            measures: measures
+                .filter(m => m.active)
+                .map(m => ({
+                    label: m.label,
+                    detail: m.detail
+                }))
+        };
+
+        try {
+            const response = await fetch('http://localhost:8000/api/ropa/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(finalData)
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                console.log("บันทึกสำเร็จ:", result);
+                alert("บันทึกข้อมูล RoPA สำเร็จแล้ว!");
+                onClose();
+            } else {
+                const errorData = await response.json();
+                console.error("Server Error:", errorData);
+                alert("เกิดข้อผิดพลาดในการบันทึก: " + JSON.stringify(errorData.detail));
+            }
+        } catch (error) {
+            console.error("Network Error:", error);
+            alert("ไม่สามารถเชื่อมต่อกับ Server ได้");
+        }
     };
 
     return (
@@ -86,36 +147,36 @@ export function RopaModal({ onClose }: { onClose: () => void }) {
                     {/* STEP 1: Basic Info & Acquisition */}
                     {step === 1 && (
                         <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
-                            <h4 className="text-indigo-400 font-bold flex items-center gap-2 text-sm uppercase tracking-wider"><FileText size={18}/> 1. ข้อมูลพื้นฐานกิจกรรมประมวลผล</h4>
+                            <h4 className="text-indigo-400 font-bold flex items-center gap-2 text-sm uppercase tracking-wider"><FileText size={18} /> 1. ข้อมูลพื้นฐานกิจกรรมประมวลผล</h4>
                             <div className="space-y-5 bg-white/5 p-6 rounded-2xl border border-white/10">
                                 <div className="space-y-1.5">
-                                    <label className="text-[13px] text-white/60 font-medium pl-1">ข้อมูลผู้ควบคุมข้อมูลส่วนบุคคล (Data Controller)</label>
-                                    <input name="controller_name" value={formData.controller_name} onChange={handleChange} type="text" placeholder="ชื่อบริษัท หรือหน่วยงานของคุณ" className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-indigo-500 transition-all" />
+                                    <label className="text-[13px] text-white/60 font-medium pl-1">ข้อมูลผู้ควบคุมข้อมูลส่วนบุคคล (Data Controller) <span className="text-red-500">*</span></label>
+                                    <input required name="controller_name" value={formData.controller_name} onChange={handleChange} type="text" placeholder="ชื่อบริษัท หรือหน่วยงานของคุณ" className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-indigo-500 transition-all" />
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="space-y-1.5">
-                                        <label className="text-[13px] text-white/60 font-medium pl-1">ชื่อกิจกรรมประมวลผล</label>
-                                        <input name="processing_activity" value={formData.processing_activity} onChange={handleChange} placeholder="เช่น การรับสมัครพนักงาน" className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-indigo-500" />
+                                        <label className="text-[13px] text-white/60 font-medium pl-1">ชื่อกิจกรรมประมวลผล <span className="text-red-500">*</span></label>
+                                        <input required name="processing_activity" value={formData.processing_activity} onChange={handleChange} placeholder="เช่น การรับสมัครพนักงาน" className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-indigo-500" />
                                     </div>
                                     <div className="space-y-1.5">
-                                        <label className="text-[13px] text-white/60 font-medium pl-1">วัตถุประสงค์</label>
-                                        <input name="purpose" value={formData.purpose} onChange={handleChange} placeholder="เช่น เพื่อการพิจารณารับเข้าทำงาน" className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-indigo-500" />
+                                        <label className="text-[13px] text-white/60 font-medium pl-1">วัตถุประสงค์ <span className="text-red-500">*</span></label>
+                                        <input required name="purpose" value={formData.purpose} onChange={handleChange} placeholder="เช่น เพื่อการพิจารณารับเข้าทำงาน" className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-indigo-500" />
                                     </div>
                                 </div>
                                 <div className="space-y-1.5">
-                                    <label className="text-[13px] text-white/60 font-medium pl-1">ข้อมูลส่วนบุคคลที่จัดเก็บ</label>
-                                    <input name="personal_data" value={formData.personal_data} onChange={handleChange} placeholder="เช่น ชื่อ-นามสกุล, เบอร์โทรศัพท์, ที่อยู่" className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-indigo-500" />
+                                    <label className="text-[13px] text-white/60 font-medium pl-1">ข้อมูลส่วนบุคคลที่จัดเก็บ <span className="text-red-500">*</span></label>
+                                    <input required name="personal_data" value={formData.personal_data} onChange={handleChange} placeholder="เช่น ชื่อ-นามสกุล, เบอร์โทรศัพท์, ที่อยู่" className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-indigo-500" />
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-1.5">
                                         <label className="text-[13px] text-white/60 font-medium pl-1">หมวดหมู่เจ้าของข้อมูล</label>
-                                        <select name="data_category" value={formData.data_category} onChange={handleChange} className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 outline-none">
+                                        <select required name="data_category" value={formData.data_category} onChange={handleChange} className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 outline-none">
                                             <option value="ลูกค้า">ลูกค้า</option><option value="พนักงาน">พนักงาน</option><option value="คู่ค้า">คู่ค้า</option>
                                         </select>
                                     </div>
                                     <div className="space-y-1.5">
                                         <label className="text-[13px] text-white/60 font-medium pl-1">ประเภทข้อมูล</label>
-                                        <select name="data_type" value={formData.data_type} onChange={handleChange} className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 outline-none">
+                                        <select required name="data_type" value={formData.data_type} onChange={handleChange} className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 outline-none">
                                             <option value="ข้อมูลทั่วไป">ข้อมูลทั่วไป</option><option value="ข้อมูลอ่อนไหว">ข้อมูลอ่อนไหว (Sensitive Data)</option>
                                         </select>
                                     </div>
@@ -123,28 +184,28 @@ export function RopaModal({ onClose }: { onClose: () => void }) {
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-1.5">
                                         <label className="text-[13px] text-white/60 font-medium pl-1">แหล่งที่มาของข้อมูล</label>
-                                        <select name="data_source" value={formData.data_source} onChange={handleChange} className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 outline-none">
+                                        <select required name="data_source" value={formData.data_source} onChange={handleChange} className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 outline-none">
                                             <option value="จากเจ้าของข้อมูลส่วนบุคคลโดยตรง">ได้มาจากเจ้าของโดยตรง</option>
                                             <option value="จากแหล่งอื่น">ได้มาจากแหล่งอื่น</option>
                                         </select>
                                     </div>
                                     <div className="space-y-1.5">
                                         <label className="text-[13px] text-white/60 font-medium pl-1">รูปแบบเอกสารที่ได้รับ</label>
-                                        <select name="acquisition_method" value={formData.acquisition_method} onChange={handleChange} className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 outline-none">
+                                        <select required name="acquisition_method" value={formData.acquisition_method} onChange={handleChange} className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 outline-none">
                                             <option value="soft file">Digital (Soft File)</option><option value="hard copy">เอกสาร (Hard Copy)</option>
                                         </select>
                                     </div>
                                 </div>
                                 <div className="space-y-1.5">
-                                    <label className="text-[13px] text-white/60 font-medium pl-1 flex items-center gap-2"><UserCheck size={14}/> ฐานในการประมวลผล (Legal Basis)</label>
-                                    <textarea name="legal_basis" value={formData.legal_basis} onChange={handleChange} placeholder="ระบุฐานกฎหมาย เช่น ฐานสัญญา, ฐานประโยชน์โดยชอบด้วยกฎหมาย" className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 outline-none h-20 resize-none" />
+                                    <label className="text-[13px] text-white/60 font-medium pl-1 flex items-center gap-2"><UserCheck size={14} /> ฐานในการประมวลผล (Legal Basis) <span className="text-red-500">*</span></label>
+                                    <textarea required name="legal_basis" value={formData.legal_basis} onChange={handleChange} placeholder="ระบุฐานกฎหมาย เช่น ฐานสัญญา, ฐานประโยชน์โดยชอบด้วยกฎหมาย" className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 outline-none h-20 resize-none" />
                                 </div>
                                 <div className="p-4 bg-indigo-500/5 rounded-xl border border-indigo-500/10 space-y-3">
                                     <span className="text-[13px] text-indigo-400 font-bold block">การขอความยินยอมกรณีผู้เยาว์ (Child Consent)</span>
                                     <div className="flex gap-6">
                                         {['อายุไม่เกิน 10 ปี', 'อายุ 10 - 20 ปี', 'ไม่มี'].map(opt => (
                                             <label key={opt} className="flex items-center gap-2 text-sm cursor-pointer hover:text-indigo-300 transition-colors">
-                                                <input type="radio" name="child_consent" value={opt} checked={formData.child_consent === opt} onChange={handleChange} className="accent-indigo-500 w-4 h-4" />{opt}
+                                                <input required type="radio" name="child_consent" value={opt} checked={formData.child_consent === opt} onChange={handleChange} className="accent-indigo-500 w-4 h-4" />{opt}
                                             </label>
                                         ))}
                                     </div>
@@ -156,48 +217,48 @@ export function RopaModal({ onClose }: { onClose: () => void }) {
                     {/* STEP 2: Storage, Transfer & Disclosure */}
                     {step === 2 && (
                         <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
-                            <h4 className="text-indigo-400 font-bold flex items-center gap-2 text-sm uppercase tracking-wider"><Globe size={18}/> 2. การเก็บรักษาและการโอนข้อมูลส่วนบุคคล</h4>
+                            <h4 className="text-indigo-400 font-bold flex items-center gap-2 text-sm uppercase tracking-wider"><Globe size={18} /> 2. การเก็บรักษาและการโอนข้อมูลส่วนบุคคล</h4>
                             <div className="bg-white/5 p-6 rounded-2xl border border-white/10 space-y-5">
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-1.5">
-                                        <label className="text-[13px] text-white/60 font-medium pl-1">วิธีการเก็บรักษา</label>
-                                        <input name="storage_method" value={formData.storage_method} onChange={handleChange} placeholder="เช่น เก็บใน Google Drive / ตู้เอกสาร" className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-indigo-500" />
+                                        <label className="text-[13px] text-white/60 font-medium pl-1">วิธีการเก็บรักษา <span className="text-red-500">*</span></label>
+                                        <input required name="storage_method" value={formData.storage_method} onChange={handleChange} placeholder="เช่น เก็บใน Google Drive / ตู้เอกสาร" className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-indigo-500" />
                                     </div>
                                     <div className="space-y-1.5">
-                                        <label className="text-[13px] text-white/60 font-medium pl-1">ระยะเวลาจัดเก็บ</label>
-                                        <input name="retention_period" value={formData.retention_period} onChange={handleChange} placeholder="เช่น 10 ปี นับจากวันสิ้นสุดสัญญา" className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-indigo-500" />
+                                        <label className="text-[13px] text-white/60 font-medium pl-1">ระยะเวลาจัดเก็บ <span className="text-red-500">*</span></label>
+                                        <input required name="retention_period" value={formData.retention_period} onChange={handleChange} placeholder="เช่น 10 ปี นับจากวันสิ้นสุดสัญญา" className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-indigo-500" />
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-1.5">
-                                        <label className="text-[13px] text-white/60 font-medium pl-1">วิธีการลบหรือทำลายเมื่อสิ้นสุด</label>
-                                        <input name="deletion_method" value={formData.deletion_method} onChange={handleChange} placeholder="เช่น ลบข้อมูลถาวร / ย่อยเอกสาร" className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-indigo-500" />
+                                        <label className="text-[13px] text-white/60 font-medium pl-1">วิธีการลบหรือทำลายเมื่อสิ้นสุด <span className="text-red-500">*</span></label>
+                                        <input required name="deletion_method" value={formData.deletion_method} onChange={handleChange} placeholder="เช่น ลบข้อมูลถาวร / ย่อยเอกสาร" className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-indigo-500" />
                                     </div>
                                     <div className="space-y-1.5">
-                                        <label className="text-[13px] text-white/60 font-medium pl-1">วิธีการและเงื่อนไขการใช้สิทธิเข้าถึง</label>
-                                        <input name="access_rights" value={formData.access_rights} onChange={handleChange} placeholder="เช่น ติดต่อผ่าน DPO ของบริษัท" className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-indigo-500" />
+                                        <label className="text-[13px] text-white/60 font-medium pl-1">วิธีการและเงื่อนไขการใช้สิทธิเข้าถึง <span className="text-red-500">*</span></label>
+                                        <input required name="access_rights" value={formData.access_rights} onChange={handleChange} placeholder="เช่น ติดต่อผ่าน DPO ของบริษัท" className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-indigo-500" />
                                     </div>
                                 </div>
                                 <div className="space-y-1.5">
-                                    <label className="text-[13px] text-white/60 font-medium pl-1">รายชื่อผู้รับข้อมูล (Recipient)</label>
-                                    <input name="recipients" value={formData.recipients} onChange={handleChange} placeholder="ระบุหน่วยงาน หรือบริษัทภายนอกที่ได้รับข้อมูลนี้ไปใช้ต่อ" className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-indigo-500" />
+                                    <label className="text-[13px] text-white/60 font-medium pl-1">รายชื่อผู้รับข้อมูล (Recipient) <span className="text-red-500">*</span></label>
+                                    <input required name="recipients" value={formData.recipients} onChange={handleChange} placeholder="ระบุหน่วยงาน หรือบริษัทภายนอกที่ได้รับข้อมูลนี้ไปใช้ต่อ" className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-indigo-500" />
                                 </div>
-                                
+
                                 <div className="border-t border-white/10 pt-5 space-y-4">
                                     <div className="flex gap-6 items-center">
                                         <span className="text-sm font-bold text-indigo-400">ส่งหรือโอนข้อมูลไปต่างประเทศหรือไม่?</span>
-                                        <label className="flex items-center gap-2 cursor-pointer"><input type="radio" checked={formData.international_transfer} onChange={() => setFormData(p => ({...p, international_transfer: true}))} className="accent-indigo-500 w-4 h-4" /> มี</label>
-                                        <label className="flex items-center gap-2 cursor-pointer"><input type="radio" checked={!formData.international_transfer} onChange={() => setFormData(p => ({...p, international_transfer: false}))} className="accent-indigo-500 w-4 h-4" /> ไม่มี</label>
+                                        <label className="flex items-center gap-2 cursor-pointer"><input type="radio" checked={formData.international_transfer} onChange={() => setFormData(p => ({ ...p, international_transfer: true }))} className="accent-indigo-500 w-4 h-4" /> มี</label>
+                                        <label className="flex items-center gap-2 cursor-pointer"><input type="radio" checked={!formData.international_transfer} onChange={() => setFormData(p => ({ ...p, international_transfer: false }))} className="accent-indigo-500 w-4 h-4" /> ไม่มี</label>
                                     </div>
                                     {formData.international_transfer && (
                                         <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
                                             <div className="space-y-1">
-                                                <label className="text-[11px] text-white/40 uppercase pl-1">ประเทศปลายทาง</label>
-                                                <input name="transfer_country" value={formData.transfer_country} onChange={handleChange} placeholder="เช่น Singapore" className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-2 text-sm outline-none" />
+                                                <label className="text-[11px] text-white/40 uppercase pl-1">ประเทศปลายทาง <span className="text-red-500">*</span></label>
+                                                <input required name="transfer_country" value={formData.transfer_country} onChange={handleChange} placeholder="เช่น Singapore" className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-2 text-sm outline-none" />
                                             </div>
                                             <div className="space-y-1">
-                                                <label className="text-[11px] text-white/40 uppercase pl-1">ชื่อบริษัท/กลุ่มบริษัท</label>
-                                                <input name="company_name" value={formData.company_name} onChange={handleChange} placeholder="ระบุชื่อบริษัทปลายทาง" className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-2 text-sm outline-none" />
+                                                <label className="text-[11px] text-white/40 uppercase pl-1">ชื่อบริษัท/กลุ่มบริษัท <span className="text-red-500">*</span></label>
+                                                <input required name="company_name" value={formData.company_name} onChange={handleChange} placeholder="ระบุชื่อบริษัทปลายทาง" className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-2 text-sm outline-none" />
                                             </div>
                                             <div className="space-y-1">
                                                 <label className="text-[11px] text-white/40 uppercase pl-1">วิธีการโอนข้อมูล</label>
@@ -221,7 +282,7 @@ export function RopaModal({ onClose }: { onClose: () => void }) {
                     {/* STEP 3: Security Measures & Risk */}
                     {step === 3 && (
                         <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
-                            <h4 className="text-emerald-400 font-bold flex items-center gap-2 text-sm uppercase tracking-wider"><Lock size={18}/> 3. มาตรการรักษาความมั่นคงปลอดภัยและการประเมินความเสี่ยง</h4>
+                            <h4 className="text-emerald-400 font-bold flex items-center gap-2 text-sm uppercase tracking-wider"><Lock size={18} /> 3. มาตรการรักษาความมั่นคงปลอดภัยและการประเมินความเสี่ยง</h4>
                             <div className="grid grid-cols-1 gap-4">
                                 {measures.map((m, i) => (
                                     <div key={m.label} className={`rounded-2xl border transition-all ${m.active ? 'bg-emerald-500/5 border-emerald-500/30' : 'bg-white/5 border-white/10 opacity-50'}`}>
@@ -246,15 +307,14 @@ export function RopaModal({ onClose }: { onClose: () => void }) {
                                 </div>
                                 <div className="flex justify-center gap-6">
                                     {['Low', 'Medium', 'High'].map(lvl => (
-                                        <button 
-                                            key={lvl} 
-                                            type="button" 
-                                            onClick={() => setFormData(p => ({ ...p, risk_level: lvl }))} 
-                                            className={`px-10 py-3.5 rounded-2xl border font-bold transition-all shadow-xl ${
-                                                formData.risk_level === lvl 
-                                                ? 'bg-indigo-600 border-indigo-400 text-white scale-110' 
-                                                : 'bg-white/5 border-white/10 text-slate-500 hover:text-white hover:bg-white/10'
-                                            }`}
+                                        <button
+                                            key={lvl}
+                                            type="button"
+                                            onClick={() => setFormData(p => ({ ...p, risk_level: lvl }))}
+                                            className={`px-10 py-3.5 rounded-2xl border font-bold transition-all shadow-xl ${formData.risk_level === lvl
+                                                    ? 'bg-indigo-600 border-indigo-400 text-white scale-110'
+                                                    : 'bg-white/5 border-white/10 text-slate-500 hover:text-white hover:bg-white/10'
+                                                }`}
                                         >
                                             {lvl}
                                         </button>
@@ -268,19 +328,27 @@ export function RopaModal({ onClose }: { onClose: () => void }) {
                 {/* Footer Controls */}
                 <div className="p-6 border-t border-white/10 bg-slate-900/50 flex justify-between items-center">
                     <button onClick={() => step > 1 ? setStep(step - 1) : onClose()} className="px-6 py-2.5 rounded-xl border border-white/20 text-white/70 hover:bg-white/5 flex items-center gap-2 text-xs font-black uppercase transition-all">
-                        {step === 1 ? <><X size={18}/> Cancel</> : <><ChevronLeft size={18}/> Back</>}
+                        {step === 1 ? <><X size={18} /> Cancel</> : <><ChevronLeft size={18} /> Back</>}
                     </button>
                     <div className="flex gap-3">
                         <button onClick={onClose} className="px-6 py-2.5 rounded-xl border border-white/20 text-white/70 hover:bg-white/5 flex items-center gap-2 text-xs font-black uppercase transition-all">
-                            <Save size={16}/> Save Draft
+                            <Save size={16} /> Save Draft
                         </button>
                         {step < 3 ? (
-                            <button onClick={() => setStep(step + 1)} className="px-8 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 shadow-lg font-black text-xs uppercase flex items-center gap-2 transition-all active:scale-95">
-                                Next <ChevronRight size={18}/>
+                            <button 
+                                disabled={!canGoNext}
+                                onClick={() => setStep(step + 1)} 
+                                className={`px-8 py-2.5 rounded-xl shadow-lg font-black text-xs uppercase flex items-center gap-2 transition-all active:scale-95 ${canGoNext ? 'bg-indigo-600 hover:bg-indigo-500' : 'bg-white/5 text-white/20 cursor-not-allowed'}`}
+                            >
+                                Next <ChevronRight size={18} />
                             </button>
                         ) : (
-                            <button onClick={handleSubmit} className="px-8 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-blue-600 shadow-xl font-black text-xs uppercase flex items-center gap-2 transition-all active:scale-95">
-                                Submit RoPA <Send size={16}/>
+                            <button 
+                                disabled={!canGoNext}
+                                onClick={handleSubmit} 
+                                className={`px-8 py-2.5 rounded-xl shadow-lg font-black text-xs uppercase flex items-center gap-2 transition-all active:scale-95 ${canGoNext ? 'bg-gradient-to-r from-indigo-600 to-blue-600' : 'bg-white/5 text-white/20 cursor-not-allowed'}`}
+                            >
+                                Submit RoPA <Send size={16} />
                             </button>
                         )}
                     </div>

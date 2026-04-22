@@ -18,13 +18,14 @@ import { ManagerDashboardTab } from '@/components/manager/dashboard-tab';
 
 //dpo
 import { DpoDashboardTab } from '@/components/dpo/dashboard-tab';
-import { DpoRopaTab } from '@/components/dpo/ropa-tab';
+import { DpoReviewModal } from '@/components/dpo/ropa-tab';
 
 //executive
 import { ExecutiveDashboardContent } from '@/components/executive/dashboard-content';
 
 //viewer/auditor
 import { ViewerDashboardTab } from '@/components/viewer/dashboard-tab';
+import { RopaList } from '@/components/dpo/ropa-list';
 
 const TABS = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['ADMIN'] },
@@ -34,7 +35,7 @@ const TABS = [
   { id: 'profile', label: 'Dashboard', icon: Users, roles: ['USER'] },
   { id: 'manager_dashboard', label: 'Dashboard', icon: Users, roles: ['SUPERVISOR'] },
   { id: 'dpo_dashboard', label: 'Dashboard', icon: Shield, roles: ['DATA PROTECTION OFFICER'] },
-  { id: 'dpo_ropa', label: 'ROPA Review', icon: ShieldCog , roles: ['DATA PROTECTION OFFICER'] },
+  { id: 'dpo_ropa', label: 'ROPA Review', icon: ShieldCog, roles: ['DATA PROTECTION OFFICER'] },
   { id: 'executive_dashboard', label: 'Dashboard', icon: Shield, roles: ['EXECUTIVE'] },
   { id: 'viewer_dashboard', label: 'Dashboard', icon: Shield, roles: ['VIEWER', 'AUDITOR'] }
 ] as const;
@@ -47,6 +48,7 @@ export default function Main() {
   const [userRole, setUserRole] = useState<string | null>(null);
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<TabId>('dashboard');
+  const [selectedRopa, setSelectedRopa] = useState<any>(null);
 
   useEffect(() => {
     const role = document.cookie
@@ -62,9 +64,9 @@ export default function Main() {
     setUserRole(role);
 
     if (role === 'ADMIN') {
-      setActiveTab('users'); 
+      setActiveTab('dashboard');
     } else if (role === 'USER') {
-      setActiveTab('profile'); 
+      setActiveTab('profile');
     } else if (role === 'SUPERVISOR') {
       setActiveTab('manager_dashboard');
     } else if (role === 'DATA PROTECTION OFFICER') {
@@ -105,7 +107,16 @@ export default function Main() {
       case 'profile': return <DashboardContent />;
       case 'manager_dashboard': return <ManagerDashboardTab />;
       case 'dpo_dashboard': return <DpoDashboardTab onNavigateToRopa={() => setActiveTab('dpo_ropa')} />;
-      case 'dpo_ropa': return <DpoRopaTab />;
+      case 'dpo_ropa':
+        if (selectedRopa) {
+          return (
+            <DpoReviewModal
+              data={selectedRopa}
+              onClose={() => setSelectedRopa(null)}
+            />
+          );
+        }
+        return <RopaList onReview={(item) => setSelectedRopa(item)} />;
       case 'executive_dashboard': return <ExecutiveDashboardContent />;
       case 'viewer_dashboard': return <ViewerDashboardTab />;
       default: return userRole === 'ADMIN' ? <DashboardTab /> : <DashboardContent />;

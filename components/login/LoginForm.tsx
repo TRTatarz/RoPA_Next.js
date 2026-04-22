@@ -6,7 +6,7 @@ import { Users, Lock, EyeOff, Eye, Loader2, AlertCircle } from "lucide-react";
 
 export default function LoginForm() {
   const router = useRouter();
-  
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://ropa-backend-production-aaf0.up.railway.app";
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -20,7 +20,7 @@ export default function LoginForm() {
       setError("");
 
       try {
-        const response = await fetch("https://ropa-backend-production-aaf0.up.railway.app/login", {
+        const response = await fetch(`${API_URL}/login`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ username, password }),

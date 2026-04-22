@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Search, Filter, Plus, Edit2, Trash2, CheckCircle2, XCircle, Clock, ChevronDown } from 'lucide-react';
 import { RopaModal } from './ropa-modal';
+import { EditRopaModal } from './edit-ropa-modal';
 import * as XLSX from 'xlsx';
 
 export function DashboardContent() {
@@ -9,6 +10,8 @@ export function DashboardContent() {
   const [requests, setRequests] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFilter, setSelectedFilter] = useState("All");
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedId, setSelectedId] = useState("");
   const handleExportExcel = () => { alert('Exporting...') }
 
   // --- ส่วนที่เพิ่มใหม่: Pagination State ---
@@ -42,7 +45,7 @@ export function DashboardContent() {
         }
 
       } catch (error) {
-        console.error("Delete error:", error , "Id test", id);
+        console.error("Delete error:", error, "Id test", id);
         alert("เกิดข้อผิดพลาดในการเชื่อมต่อ");
       }
     }
@@ -55,17 +58,30 @@ export function DashboardContent() {
   const summaryStats = useMemo(() => {
     return [
       { title: 'ทั้งหมด', value: requests.length.toString() },
-      { title: 'อนุมัติแล้ว', value: requests.filter(r => r.status === 'Completed').length.toString() },
-      { title: 'รอดำเนินการ', value: requests.filter(r => r.status === 'Pending' || r.status === 'Draft').length.toString() },
-      { title: 'ไม่อนุมัติ', value: requests.filter(r => r.status === 'Reject').length.toString() }
+      {
+        title: 'อนุมัติแล้ว',
+        value: requests.filter(r => r.status === 'Completed').length.toString()
+      },
+      {
+        title: 'รอดำเนินการ',
+        value: requests.filter(r => r.status === 'Pending' || r.status === 'Draft').length.toString()
+      },
+      {
+        title: 'ไม่อนุมัติ',
+        value: requests.filter(r => r.status === 'Reject').length.toString()
+      }
     ];
   }, [requests]);
 
   // กรองข้อมูลตาม Search และ Filter ก่อนนำไปแบ่งหน้า
   const filteredRequests = useMemo(() => {
     return requests.filter(req => {
+      // กรองคำค้นหา
       const matchesSearch = req.processing_activity?.toLowerCase().includes(searchQuery.toLowerCase());
+
+      // กรองสถานะ (ถ้าเลือก All ให้ผ่านหมด ถ้าไม่ใช่ All ต้องมี status ตรงกับที่เลือก)
       const matchesFilter = selectedFilter === "All" || req.status === selectedFilter;
+
       return matchesSearch && matchesFilter;
     });
   }, [requests, searchQuery, selectedFilter]);
@@ -97,7 +113,7 @@ export function DashboardContent() {
         const workbook = XLSX.read(data, { type: 'binary' });
         const sheetName = workbook.SheetNames[0]; // เลือก Sheet แรก
         const sheet = workbook.Sheets[sheetName];
-        
+
         // แปลงข้อมูลใน Sheet เป็น JSON (Array ของ Object)
         const jsonData = XLSX.utils.sheet_to_json(sheet);
 
@@ -106,6 +122,7 @@ export function DashboardContent() {
           return;
         }
 
+        // ยิง API ไปที่ Backend (เส้นทางที่เราคุยกันไว้)
         const response = await fetch('http://localhost:8000/api/ropa/import', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -125,7 +142,7 @@ export function DashboardContent() {
       }
     };
     reader.readAsBinaryString(file);
-    
+
     // Reset ค่า input เพื่อให้เลือกไฟล์เดิมซ้ำได้ถ้าต้องการ
     e.target.value = "";
   };
@@ -138,41 +155,41 @@ export function DashboardContent() {
         <div className="absolute top-[20%] -right-[10%] w-[30%] h-[30%] rounded-full bg-indigo-600/10 blur-[120px]" />
       </div>
 
-<div className="flex flex-col md:flex-row md:items-start justify-between gap-6 relative z-10">
-  <div className="flex flex-col gap-1">
-    <h2 className="text-4xl font-bold text-white tracking-tight">Department Dashboard</h2>
-    <p className="text-slate-500 text-base font-medium">บันทึก RoPA ของแผนก</p>
-  </div>
-  
-  <div className="flex flex-wrap items-center gap-3">
-    {/* ปุ่ม Import - คลิกแล้วเลือกไฟล์ได้เลย */}
-    <label className="cursor-pointer bg-slate-800/50 hover:bg-slate-700 border border-slate-700/50 text-slate-300 px-6 py-2.5 rounded-full transition-all text-xs font-bold uppercase tracking-widest flex items-center gap-2 active:scale-95">
-      Import
-      <input 
-        type="file" 
-        accept=".xlsx, .xls" 
-        className="hidden" 
-        onChange={handleImportExcel} 
-      />
-    </label>
+      <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 relative z-10">
+        <div className="flex flex-col gap-1">
+          <h2 className="text-4xl font-bold text-white tracking-tight">Department Dashboard</h2>
+          <p className="text-slate-500 text-base font-medium">บันทึก RoPA ของแผนก</p>
+        </div>
 
-    {/* ปุ่ม Export - ใส่ onClick รอไว้ได้เลย */}
-    <button 
-      onClick={handleExportExcel}
-      className="bg-slate-800/50 hover:bg-slate-700 border border-slate-700/50 text-slate-300 px-6 py-2.5 rounded-full transition-all text-xs font-bold uppercase tracking-widest active:scale-95"
-    >
-      Export
-    </button>
+        <div className="flex flex-wrap items-center gap-3">
+          {/* ปุ่ม Import - คลิกแล้วเลือกไฟล์ได้เลย */}
+          <label className="cursor-pointer bg-slate-800/50 hover:bg-slate-700 border border-slate-700/50 text-slate-300 px-6 py-2.5 rounded-full transition-all text-xs font-bold uppercase tracking-widest flex items-center gap-2 active:scale-95">
+            Import
+            <input
+              type="file"
+              accept=".xlsx, .xls"
+              className="hidden"
+              onChange={handleImportExcel}
+            />
+          </label>
 
-    {/* ปุ่มเพิ่มรายการใหม่ */}
-    <button 
-      onClick={() => setIsRopaModalOpen(true)} 
-      className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-6 py-2.5 rounded-full transition-all text-xs font-bold shadow-lg shadow-blue-900/20 active:scale-95 tracking-widest uppercase shrink-0"
-    >
-      <Plus size={16} /> ROPA Records
-    </button>
-  </div>
-</div>
+          {/* ปุ่ม Export - ใส่ onClick รอไว้ได้เลย */}
+          <button
+            onClick={handleExportExcel}
+            className="bg-slate-800/50 hover:bg-slate-700 border border-slate-700/50 text-slate-300 px-6 py-2.5 rounded-full transition-all text-xs font-bold uppercase tracking-widest active:scale-95"
+          >
+            Export
+          </button>
+
+          {/* ปุ่มเพิ่มรายการใหม่ */}
+          <button
+            onClick={() => setIsRopaModalOpen(true)}
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-6 py-2.5 rounded-full transition-all text-xs font-bold shadow-lg shadow-blue-900/20 active:scale-95 tracking-widest uppercase shrink-0"
+          >
+            <Plus size={16} /> ROPA Records
+          </button>
+        </div>
+      </div>
 
       {/* Summary Cards (เหมือนเดิม) */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 xl:gap-8 relative z-10">
@@ -230,9 +247,9 @@ export function DashboardContent() {
                     <p className="text-slate-400 text-[13px] mt-1 font-medium">{req.controller_name}</p>
                   </div>
                   <div className={`flex items-center gap-2 px-3 py-1 rounded-full border text-[10px] font-black uppercase tracking-wider ${req.status === 'Completed' ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400' :
-                      req.status === 'Reject' ? 'border-red-500/30 bg-red-500/10 text-red-400' :
-                        req.status === 'Draft' ? 'border-slate-500/30 bg-slate-500/10 text-slate-400' :
-                          'border-yellow-500/30 bg-yellow-500/10 text-yellow-500'
+                    req.status === 'Reject' ? 'border-red-500/30 bg-red-500/10 text-red-400' :
+                      req.status === 'Draft' ? 'border-slate-500/30 bg-slate-500/10 text-slate-400' :
+                        'border-yellow-500/30 bg-yellow-500/10 text-yellow-500'
                     }`}>
                     {req.status || 'Pending'}
                   </div>
@@ -243,8 +260,20 @@ export function DashboardContent() {
                     <p className="mt-1 text-[11px] opacity-50">ประเภทข้อมูล: {req.data_type}</p>
                   </div>
                   <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button className="text-slate-500 hover:text-white transition-colors">
-                      <div className="p-2 bg-slate-800 border border-slate-700/50 rounded-lg"><Edit2 size={16} /></div>
+                    <button
+                      onClick={() => {
+                        setSelectedId(req.id); // เก็บ ID ของรายการที่จะแก้
+                        setIsEditModalOpen(true); // เปิดหน้า Edit
+                      }}
+                      className={`transition-colors ${(req.status === 'Reject' || req.status === 'Draft')
+                          ? 'text-slate-400 hover:text-white'
+                          : 'text-slate-700 cursor-not-allowed opacity-30'
+                        }`}
+                      disabled={!(req.status === 'Reject' || req.status === 'Draft')}
+                    >
+                      <div className="p-2 bg-slate-800 border border-slate-700/50 rounded-lg">
+                        <Edit2 size={16} />
+                      </div>
                     </button>
                     <button
                       onClick={() => handleDelete(req.id)} // เรียกใช้ฟังก์ชันลบโดยส่ง id ไป
@@ -293,8 +322,20 @@ export function DashboardContent() {
           </div>
         </div>
       </div>
-
+            {/* Modal สำหรับสร้างใหม่  */}
       {isRopaModalOpen && <RopaModal onClose={() => { setIsRopaModalOpen(false); fetchRopaData(); }} />}
+
+            {/* Component EditRopaModal  */}
+      {isEditModalOpen && (
+        <EditRopaModal 
+          ropaId={selectedId} 
+          onClose={() => {
+            setIsEditModalOpen(false);
+            fetchRopaData(); 
+          }} 
+        />
+      )}
+
     </div>
   );
 }

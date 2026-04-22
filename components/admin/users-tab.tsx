@@ -291,6 +291,7 @@ export function UsersTab() {
                     <option value="ADMIN">ADMIN</option>
                     <option value="SUPERVISOR">SUPERVISOR</option>
                     <option value="DATA PROTECTION OFFICER">DATA PROTECTION OFFICER</option>
+                    <option value="EXECUTIVE">EXECUTIVE</option>
                   </select>
                 </div>
                 <div className="space-y-1.5">
@@ -301,6 +302,7 @@ export function UsersTab() {
                     onChange={e => setFormData({ ...formData, department: e.target.value })}
                   >
                     <option value="DPT_A">Department A</option>
+                    <option value="IT">IT</option>
                     <option value="HR">Human Resources</option>
                     <option value="DPO">Data Protection Department</option>
                   </select>

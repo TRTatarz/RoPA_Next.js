@@ -18,6 +18,7 @@ interface Measure {
 export function EditRopaModal({ onClose, ropaId }: EditRopaModalProps) {
     const [step, setStep] = useState(1);
     const [isLoading, setIsLoading] = useState(true);
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://ropa-backend-production-aaf0.up.railway.app";
 
     const [measures, setMeasures] = useState<Measure[]>([
         { label: 'มาตรการเชิงองค์กร', active: false, detail: '' },
@@ -58,7 +59,7 @@ export function EditRopaModal({ onClose, ropaId }: EditRopaModalProps) {
         const fetchOldData = async () => {
             try {
                 setIsLoading(true);
-                const response = await fetch(`http://localhost:8000/api/ropa/`);
+                const response = await fetch(`${API_URL}/api/ropa/`);
                 const data = await response.json();
 
                 // หาตัวที่ ID ตรงกัน
@@ -135,7 +136,7 @@ export function EditRopaModal({ onClose, ropaId }: EditRopaModalProps) {
             };
 
             // 2. ยิง API (ตรวจสอบ URL ให้แน่ใจว่าไม่มี /api/ropa ซ้ำซ้อน)
-            const response = await fetch(`http://localhost:8000/api/ropa/${ropaId}`, {
+            const response = await fetch(`${API_URL}/api/ropa/${ropaId}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',

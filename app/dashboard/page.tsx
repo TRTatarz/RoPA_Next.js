@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { LayoutDashboard, Users, Shield, FileText, LogOut, Menu, X, ShieldCog } from 'lucide-react';
+import { LayoutDashboard, Users, Shield, FileText, LogOut, Menu, X, ShieldCog, Book } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 //admin
@@ -19,6 +19,7 @@ import { ManagerDashboardTab } from '@/components/manager/dashboard-tab';
 //dpo
 import { DpoDashboardTab } from '@/components/dpo/dashboard-tab';
 import { DpoReviewModal } from '@/components/dpo/ropa-tab';
+import { DpoResources } from '@/components/dpo/resources';
 
 //executive
 import { ExecutiveDashboardContent } from '@/components/executive/dashboard-content';
@@ -31,13 +32,14 @@ const TABS = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['ADMIN'] },
   { id: 'users', label: 'User Management', icon: Users, roles: ['ADMIN'] },
   { id: 'roles', label: 'Roles & Permission', icon: Shield, roles: ['ADMIN'] },
-  { id: 'audit', label: 'Audit Logs', icon: FileText, roles: ['ADMIN', 'DATA PROTECTION OFFICER'] },
   { id: 'profile', label: 'Dashboard', icon: Users, roles: ['USER'] },
   { id: 'manager_dashboard', label: 'Dashboard', icon: Users, roles: ['SUPERVISOR'] },
   { id: 'dpo_dashboard', label: 'Dashboard', icon: Shield, roles: ['DATA PROTECTION OFFICER'] },
   { id: 'dpo_ropa', label: 'ROPA Review', icon: ShieldCog, roles: ['DATA PROTECTION OFFICER'] },
   { id: 'executive_dashboard', label: 'Dashboard', icon: Shield, roles: ['EXECUTIVE'] },
-  { id: 'viewer_dashboard', label: 'Dashboard', icon: Shield, roles: ['VIEWER', 'AUDITOR'] }
+  { id: 'viewer_dashboard', label: 'Dashboard', icon: Shield, roles: ['VIEWER', 'AUDITOR'] },
+  { id: 'audit', label: 'Audit Logs', icon: FileText, roles: ['ADMIN', 'DATA PROTECTION OFFICER'] },
+  { id: 'resources', label: 'Resources', icon: Book, roles: ['DATA PROTECTION OFFICER'] }
 ] as const;
 
 
@@ -100,25 +102,25 @@ export default function Main() {
     switch (activeTab) {
       case 'dashboard':
         return userRole === 'ADMIN' ? <DashboardTab /> : <DashboardContent />;
-
       case 'users': return <UsersTab />;
       case 'roles': return <RolesTab />;
-      case 'audit': return <AuditTab />;
       case 'profile': return <DashboardContent />;
       case 'manager_dashboard': return <ManagerDashboardTab />;
       case 'dpo_dashboard': return <DpoDashboardTab onNavigateToRopa={() => setActiveTab('dpo_ropa')} />;
+      case 'audit': return <AuditTab />;
+      case 'resources': return <DpoResources />;
       case 'dpo_ropa':
         if (selectedRopa) {
           return (
             <DpoReviewModal
-              data={selectedRopa}
-              onClose={() => setSelectedRopa(null)}
+            data={selectedRopa}
+            onClose={() => setSelectedRopa(null)}
             />
           );
         }
         return <RopaList onReview={(item) => setSelectedRopa(item)} />;
-      case 'executive_dashboard': return <ExecutiveDashboardContent />;
-      case 'viewer_dashboard': return <ViewerDashboardTab />;
+        case 'executive_dashboard': return <ExecutiveDashboardContent />;
+        case 'viewer_dashboard': return <ViewerDashboardTab />;
       default: return userRole === 'ADMIN' ? <DashboardTab /> : <DashboardContent />;
     }
   };
@@ -138,7 +140,7 @@ export default function Main() {
         ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
       `}>
         <div className="p-8">
-          <h1 className="text-3xl font-bold text-white tracking-tight drop-shadow-md">ชื่อเว็บ</h1>
+          <h1 className="text-2xl font-bold text-white tracking-tight drop-shadow-md">NEXUS INTERNAL</h1>
           {userRole && <p className="text-[10px] text-blue-400 font-black mt-1 uppercase tracking-[0.2em]">{userRole}</p>}
         </div>
 

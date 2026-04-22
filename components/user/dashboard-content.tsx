@@ -13,6 +13,7 @@ export function DashboardContent() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedId, setSelectedId] = useState("");
   const handleExportExcel = () => { alert('Exporting...') }
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://ropa-backend-production-aaf0.up.railway.app";
 
   // --- ส่วนที่เพิ่มใหม่: Pagination State ---
   const [currentPage, setCurrentPage] = useState(1);
@@ -20,7 +21,7 @@ export function DashboardContent() {
 
   const fetchRopaData = async () => {
     try {
-      const response = await fetch('http://localhost:8000/api/ropa/');
+      const response = await fetch(`${API_URL}/api/ropa/`);
       if (response.ok) {
         const data = await response.json();
         setRequests(data);
@@ -33,7 +34,7 @@ export function DashboardContent() {
   const handleDelete = async (id: string) => {
     if (window.confirm("คุณแน่ใจหรือไม่ว่าต้องการลบรายการนี้?")) {
       try {
-        const response = await fetch(`http://localhost:8000/api/ropa/${id}`, {
+        const response = await fetch(`${API_URL}/api/ropa/${id}`, {
           method: 'DELETE',
         });
 
@@ -123,7 +124,7 @@ export function DashboardContent() {
         }
 
         // ยิง API ไปที่ Backend (เส้นทางที่เราคุยกันไว้)
-        const response = await fetch('http://localhost:8000/api/ropa/import', {
+        const response = await fetch(`${API_URL}/api/ropa/import`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(jsonData),
@@ -266,8 +267,8 @@ export function DashboardContent() {
                         setIsEditModalOpen(true); // เปิดหน้า Edit
                       }}
                       className={`transition-colors ${(req.status === 'Reject' || req.status === 'Draft')
-                          ? 'text-slate-400 hover:text-white'
-                          : 'text-slate-700 cursor-not-allowed opacity-30'
+                        ? 'text-slate-400 hover:text-white'
+                        : 'text-slate-700 cursor-not-allowed opacity-30'
                         }`}
                       disabled={!(req.status === 'Reject' || req.status === 'Draft')}
                     >
@@ -276,9 +277,13 @@ export function DashboardContent() {
                       </div>
                     </button>
                     <button
-                      onClick={() => handleDelete(req.id)} // เรียกใช้ฟังก์ชันลบโดยส่ง id ไป
-                      className="text-slate-500 hover:text-red-400 transition-colors"
-                      title="Delete"
+                      onClick={() => handleDelete(req.id)}
+                      disabled={!(req.status === 'Reject' || req.status === 'Draft')}
+                      className={`transition-colors ${(req.status === 'Reject' || req.status === 'Draft')
+                          ? 'text-slate-500 hover:text-red-400'
+                          : 'text-slate-700 cursor-not-allowed opacity-30'
+                        }`}
+                      title={req.status === 'Completed' ? "Cannot delete completed record" : "Delete"}
                     >
                       <div className="p-2 bg-slate-800 border border-slate-700/50 rounded-lg">
                         <Trash2 size={16} />
@@ -322,17 +327,17 @@ export function DashboardContent() {
           </div>
         </div>
       </div>
-            {/* Modal สำหรับสร้างใหม่  */}
+      {/* Modal สำหรับสร้างใหม่  */}
       {isRopaModalOpen && <RopaModal onClose={() => { setIsRopaModalOpen(false); fetchRopaData(); }} />}
 
-            {/* Component EditRopaModal  */}
+      {/* Component EditRopaModal  */}
       {isEditModalOpen && (
-        <EditRopaModal 
-          ropaId={selectedId} 
+        <EditRopaModal
+          ropaId={selectedId}
           onClose={() => {
             setIsEditModalOpen(false);
-            fetchRopaData(); 
-          }} 
+            fetchRopaData();
+          }}
         />
       )}
 

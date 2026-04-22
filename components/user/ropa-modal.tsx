@@ -5,6 +5,7 @@ import { X, ChevronLeft, ChevronRight, Save, Send, ShieldCheck, Database, Globe,
 
 export function RopaModal({ onClose }: { onClose: () => void }) {
     const [step, setStep] = useState(1);
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://ropa-backend-production-aaf0.up.railway.app";
 
     const [measures, setMeasures] = useState([
         { label: 'มาตรการเชิงองค์กร', active: false, detail: '' },
@@ -106,7 +107,7 @@ export function RopaModal({ onClose }: { onClose: () => void }) {
         };
 
         try {
-            const response = await fetch('http://localhost:8000/api/ropa/', {
+            const response = await fetch(`${API_URL}/api/ropa/`, {
                 method: 'POST', // หรือ 'PUT' ถ้าเป็นหน้า Edit
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload) // ส่งตัว payload ที่รวมร่างแล้วไป
@@ -133,7 +134,7 @@ export function RopaModal({ onClose }: { onClose: () => void }) {
         };
 
         try {
-            const response = await fetch('http://localhost:8000/api/ropa/', {
+            const response = await fetch(`${API_URL}/api/ropa/`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload),

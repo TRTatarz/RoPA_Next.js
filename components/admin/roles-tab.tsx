@@ -49,7 +49,7 @@ export function RolesTab() {
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
           <h2 className="text-4xl font-bold text-white tracking-tight">Roles & Permission</h2>
-          <p className="text-slate-500 mt-2 text-base font-medium">Define access levels and system security policies.</p>
+          <p className="text-slate-500 mt-2 text-base font-medium">DEFINE ACCESS LEVELS AND SYSTEM SECURITY POLICIES</p>
         </div>
         <button
           onClick={() => openModal('add')}

@@ -10,7 +10,7 @@ export function DpoResources() {
 
       <div className="flex flex-col gap-1 relative z-10">
         <h2 className="text-4xl font-bold text-white tracking-tight">DPO Resources</h2>
-        <p className="text-slate-500 text-base font-medium uppercase tracking-widest">Guides, Templates, and Best Practices</p>
+        <p className="text-slate-500 text-base font-medium uppercase tracking-widest">GUIDES, TEMPLATES, AND BEST PRACTICES</p>
       </div>
     </div>
   );

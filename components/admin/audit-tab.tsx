@@ -51,7 +51,7 @@ export function AuditTab() {
 
       <div>
         <h2 className="text-4xl font-bold text-white tracking-tight">Audit Logs</h2>
-        <p className="text-slate-500 mt-2 text-base font-medium">Access Rights Revision and User Management System</p>
+        <p className="text-slate-500 mt-2 text-base font-medium">ACCESS RIGHTS REVISION AND USER MANAGEMENT SYSTEM</p>
       </div>
 
       <div className="bg-[#0b1429]/30 backdrop-blur-xl border border-slate-800/60 rounded-4xl flex flex-col shadow-2xl flex-1 overflow-hidden">

@@ -142,7 +142,7 @@ export function UsersTab() {
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
           <div>
             <h1 className="text-4xl font-bold text-white tracking-tight">User Management</h1>
-            <p className="text-slate-500 mt-2 text-sm font-medium">Manage organization identities and permission levels.</p>
+            <p className="text-slate-500 mt-2 text-sm font-medium">MANAGE ORGANIZATION IDENTITIES AND PERMISSION LEVELS</p>
           </div>
 
           <div className="flex items-center gap-3">

@@ -159,7 +159,7 @@ export function DashboardContent() {
       <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 relative z-10">
         <div className="flex flex-col gap-1">
           <h2 className="text-4xl font-bold text-white tracking-tight">Department Dashboard</h2>
-          <p className="text-slate-500 text-base font-medium">ROPA Records Management</p>
+          <p className="text-slate-500 text-base font-medium">ROPA RECORDS MANAGEMENT</p>
         </div>
 
         <div className="flex flex-wrap items-center gap-3">

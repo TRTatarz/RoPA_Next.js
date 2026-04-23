@@ -65,7 +65,7 @@ export function DpoDashboardTab({ onNavigateToRopa }: { onNavigateToRopa: (item:
       {/* Header Info */}
       <div className="flex flex-col gap-1 relative z-10">
         <h2 className="text-4xl font-bold text-white tracking-tight">Dashboard</h2>
-        <p className="text-slate-500 text-base font-medium uppercase tracking-widest">Compliance Overview</p>
+        <p className="text-slate-500 text-base font-medium uppercase tracking-widest">COMPLIANCE OVERVIEW</p>
       </div>
 
       {/* Summary Cards */}

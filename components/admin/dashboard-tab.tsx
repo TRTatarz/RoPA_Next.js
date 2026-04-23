@@ -72,7 +72,7 @@ export function DashboardTab() {
 
       <div className="flex flex-col gap-1">
         <h2 className="text-4xl font-bold text-white tracking-tight">Dashboard</h2>
-        <p className="text-slate-500 text-base font-medium">Overview of your organization and system activity.</p>
+        <p className="text-slate-500 text-base font-medium">OVERVIEW OF ORGANIZATION AND SYSTEM ACTIVITY</p>
       </div>
 
       {/* Summary Cards */}

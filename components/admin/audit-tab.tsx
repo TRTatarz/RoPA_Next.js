@@ -51,7 +51,7 @@ export function AuditTab() {
 
       <div>
         <h2 className="text-4xl font-bold text-white tracking-tight">Audit Logs</h2>
-        <p className="text-slate-500 mt-2 text-base font-medium">ตรวจสอบย้อนหลังระดับองค์กรสำหรับการเปลี่ยนแปลงสิทธิ์ และการจัดการผู้ใช้</p>
+        <p className="text-slate-500 mt-2 text-base font-medium">ระบบบันทึกสำหรับการเปลี่ยนแปลงสิทธิ์ และการจัดการผู้ใช้</p>
       </div>
 
       <div className="bg-[#0b1429]/30 backdrop-blur-xl border border-slate-800/60 rounded-4xl flex flex-col shadow-2xl flex-1 overflow-hidden">
@@ -94,7 +94,7 @@ export function AuditTab() {
                 <th className="py-5 px-8 text-[11px] font-black uppercase text-slate-600 tracking-[0.15em]">User</th>
                 <th className="py-5 px-8 text-[11px] font-black uppercase text-slate-600 tracking-[0.15em]">Action</th>
                 <th className="py-5 px-8 text-[11px] font-black uppercase text-slate-600 tracking-[0.15em]">Target</th>
-                <th className="py-5 px-8 text-[11px] font-black uppercase text-slate-600 tracking-[0.15em]">เหตุผล</th>
+                <th className="py-5 px-8 text-[11px] font-black uppercase text-slate-600 tracking-[0.15em]">Reason</th>
                 <th className="py-5 px-8 text-[11px] font-black uppercase text-slate-600 tracking-[0.15em] text-right">Timestamp</th>
               </tr>
             </thead>
@@ -126,7 +126,7 @@ export function AuditTab() {
         </div>
 
         <div className="p-6 border-t border-slate-800 flex items-center justify-between text-[11px] text-slate-500 mt-auto bg-slate-900/30 rounded-b-4xl font-bold uppercase tracking-widest">
-          <p>แสดง {logs.length} จาก {totalCount}</p>
+          <p>From {logs.length} To {totalCount}</p>
           <div className="flex items-center gap-2">
             <button 
               disabled={currentPage === 1}

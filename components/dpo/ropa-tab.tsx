@@ -22,7 +22,7 @@ export function DpoReviewModal({ onClose, data }: { onClose: () => void; data: a
     const updatedStatus = type === 'approve' ? 'Completed' : 'Reject';
 
     try {
-      const response = await fetch(`${API_URL}/api/ropa/${data.id}/`, {
+      const response = await fetch(`${API_URL}/api/ropa/${data.id}`, {
         method: 'PATCH', 
         headers: {
           'Content-Type': 'application/json',

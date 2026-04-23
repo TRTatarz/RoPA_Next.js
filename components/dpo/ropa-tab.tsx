@@ -9,7 +9,7 @@ import {
 
 export function DpoReviewModal({ onClose, data }: { onClose: () => void; data: any }) {
   const [comment, setComment] = useState('');
-  const API_URL = "";
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://ropa-backend-production-aaf0.up.railway.app";
 
   if (!data) return null;
 

@@ -39,7 +39,7 @@ const TABS = [
   { id: 'executive_dashboard', label: 'Dashboard', icon: Shield, roles: ['EXECUTIVE'] },
   { id: 'viewer_dashboard', label: 'Dashboard', icon: Shield, roles: ['VIEWER', 'AUDITOR'] },
   { id: 'audit', label: 'Audit Logs', icon: FileText, roles: ['ADMIN', 'DATA PROTECTION OFFICER'] },
-  { id: 'resources', label: 'Resources', icon: Book, roles: ['DATA PROTECTION OFFICER'] }
+  { id: 'resources', label: 'Resources', icon: Book, roles: ['DATA PROTECTION OFFICER', 'USER'] }
 ] as const;
 
 

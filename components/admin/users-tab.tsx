@@ -305,6 +305,7 @@ export function UsersTab() {
                     <option value="IT">IT</option>
                     <option value="HR">Human Resources</option>
                     <option value="DPO">Data Protection Department</option>
+                    <option value="CEO">Executive</option>
                   </select>
                 </div>
               </div>
